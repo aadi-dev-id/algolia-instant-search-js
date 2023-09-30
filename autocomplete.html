@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Autocomplete Search Box | Mr Adarsh Maddheshiya</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+  </head>
+  <body>
+    <header>
+      <input type="text" id="srchtxt" placeholder="search">
+      <div id="search-input"></div>
+      <div id="results"></div>
+    </header>
+    
+
+
+
+        <!-- Your script imports -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.20.0/dist/algoliasearch.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.38.1/dist/autocomplete.jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@algolia/autocomplete-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@algolia/autocomplete-plugin-recent-searches@1.11.0/dist/umd/index.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@algolia/autocomplete-plugin-query-suggestions@1.11.0/dist/umd/index.production.min.js"></script>
+
+<!-- Your main script -->
+<script>
+  const { autocomplete, getAlgoliaResults } = window['@algolia/autocomplete-js'];
+  const { createQuerySuggestionsPlugin } = window['@algolia/autocomplete-plugin-query-suggestions'];
+  const { createLocalStorageRecentSearchesPlugin } = window['@algolia/autocomplete-plugin-recent-searches'];
+
+  // Access the autocomplete object directly from the global scope
+  const autocompleteSearch = autocomplete({
+    container: '#search-input',
+    appendTo: '#results',
+    getSources() {
+      console.log("Initializing autocomplete");
+
+      const searchClient = algoliasearch('APPLICATION_ID', 'API_KEY');
+      const recentSearchesPlugin = createLocalStorageRecentSearchesPlugin({
+        key: 'search',
+      });
+      const querySuggestionsPlugin = createQuerySuggestionsPlugin({
+        searchClient,
+        indexName: 'QUERY_SUGGESTION_INDEX_NAME',
+      });
+      
+      return [
+        {
+          sourceId: 'querySuggestions',
+          plugins: [recentSearchesPlugin, querySuggestionsPlugin],
+          getItemInputValue: ({ item }) => item.query,
+          getItems({ query }) {
+            return getAlgoliaResults({
+              searchClient,
+              queries: [
+                {
+                  indexName: 'INDEX_NAME',
+                  query,
+                  params: {
+                    hitsPerPage: 10,
+                  },
+                },
+              ],
+            });
+          },
+          templates: {
+            item({ item, html }) {
+              return html`<div>
+                            <div>${item.name}</div>
+                          </div>`;
+            },
+          },
+        },
+      ];
+    },
+  });
+  $(".aa-DetachedSearchButton").click();
+  $("#srchtxt").on("keyup",function(e) {
+    $('.aa-Input').val(e.target.value).trigger('keyup');
+  });
+</script>
+
+
+  </body>
+</html>
